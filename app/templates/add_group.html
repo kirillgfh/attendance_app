@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container">
+    <h2 class="text-center mt-4">Создание новой группы</h2>
+
+    <div class="card mt-4">
+        <div class="card-header">
+            <h4>Введите данные группы</h4>
+        </div>
+        <div class="card-body">
+            <form method="POST" action="{{ url_for('add_group') }}">
+                <div class="form-group">
+                    <label for="group_name">Название группы</label>
+                    <input type="text" class="form-control" id="group_name" name="group_name" required>
+                </div>
+                <button type="submit" class="btn btn-primary">Создать группу</button>
+                <a href="{{ url_for('admin') }}" class="btn btn-secondary">Отмена</a>
+            </form>
+        </div>
+    </div>
+
+    <!-- Блок для отображения сгенерированных данных -->
+    {% if created_group %}
+        <div class="card mt-4">
+            <div class="card-header">
+                <h4>Группа успешно создана!</h4>
+            </div>
+            <div class="card-body">
+                <p><strong>Название группы:</strong> {{ created_group }}</p>
+                <p><strong>Логин старосты:</strong> 
+                    <span id="username">{{ created_username }}</span>
+                    <button class="btn btn-sm btn-outline-secondary" onclick="copyToClipboard('username')">Копировать</button>
+                </p>
+                <p><strong>Пароль старосты:</strong> 
+                    <span id="password">{{ created_password }}</span>
+                    <button class="btn btn-sm btn-outline-secondary" onclick="copyToClipboard('password')">Копировать</button>
+                </p>
+            </div>
+        </div>
+    {% endif %}
+</div>
+
+<!-- Скрипт для копирования в буфер обмена -->
+<script>
+    function copyToClipboard(elementId) {
+        const element = document.getElementById(elementId);
+        const text = element.innerText;
+        navigator.clipboard.writeText(text)
+            .then(() => alert('Скопировано: ' + text))
+            .catch(() => alert('Не удалось скопировать'));
+    }
+</script>
+{% endblock %}

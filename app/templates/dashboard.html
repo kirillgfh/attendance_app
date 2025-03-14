@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles_test_carousel.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <div class="scroll-container">
+        <div class="scroll-content">
+            {% for i in range(days|length) %}
+            <div class="item {% if i == today_index %}today{% endif %}" data-index="{{ i }}" data-date="{{ (today - timedelta(days=(6 - i))).strftime('%Y-%m-%d') }}" id="selected-date">
+                <ul>
+                    <li>{{ days[i][0] }}</li> <!-- День недели (Пн, Вт и т.д.) -->
+                    <li>{{ days[i][1] }}</li> <!-- Число месяца -->
+                </ul>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    <!-- Контент, который будет меняться -->
+    <div class="content" id="content">
+        Выберите день, чтобы увидеть информацию.
+    </div>
+    <script src="{{ url_for('static', filename='js/get_lessons_for_day.js') }}" async></script>
+    <script src="{{ url_for('static', filename='js/script_test_carousel.js') }}" async></script>
+    <!-- Блок для отображения уроков на выбранный день -->
+    <div class="container mt-4" id="lessons-container">
+        <h3>Уроки на выбранный день (Тип недели: <span id="week-type"></span>)</h3>
+        <ul id="lessons-list">
+            <!-- Уроки будут добавляться сюда через JavaScript -->
+        </ul>
+    </div>
+{% endblock %}

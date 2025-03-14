@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+
+{% block content %}
+<script src="{{ url_for('static', filename='js/extend_to_all_lessons.js') }}" async></script>
+
+<div class="container">
+    <h2 class="text-center mt-4">Посещаемость студентов</h2>
+    <h3 class="text-center">{{ lesson.subject.name }} ({{ lesson.lesson_type }}) - {{ lesson.lesson_number }} пара</h3>
+
+    <div class="card mt-4">
+        <div class="card-header">
+            <h4>Список студентов</h4>
+        </div>
+        <div class="card-body">
+            <!-- Форма для отметки посещений -->
+            <form method="POST" action="{{ url_for('mark_attendance') }}">
+                <!-- Скрытое поле для selected_date -->
+                <input type="hidden" id="selected-date" name="selected_date" value="{{ selected_date }}" data-lesson-id="{{ lesson.id }}">
+                <!-- Кнопка "Распространить данные пары на все пары ниже" -->
+                <button type="button" class="btn btn-info mb-3" id="propagate-button">
+                    Распространить данные пары на все пары ниже
+                </button>
+
+                <!-- Таблица с посещаемостью -->
+                <table class="table table-bordered">
+                    <thead>
+                        <tr>
+                            <th>Студент</th>
+                            <th>Присутствие</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for student in students %}
+                            {% set student_attendance = attendance_data | selectattr("student_id", "equalto", student.id) | first %}
+                            <tr>
+                                <td>{{ student.name }}</td>
+                                <td>
+                                    <!-- Скрытое поле для lesson_id -->
+                                    <input type="hidden" name="lesson_{{ student.id }}" value="{{ lesson.id }}">
+                                    <!-- Чекбокс для присутствия -->
+                                    <input type="checkbox" name="status_{{ student.id }}" value="1" style="width: 20px; height: 20px;"
+                                        {% if student_attendance and student_attendance.status %}checked{% endif %}>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+
+                <!-- Кнопка "Сохранить" -->
+                <button type="submit" class="btn btn-primary">Сохранить</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Кнопка "Назад" -->
+    <button class="btn btn-secondary mt-3" onclick="window.history.back();">Назад</button>
+</div>
+
+{% endblock %}

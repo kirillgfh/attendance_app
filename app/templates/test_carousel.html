@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles_test_carousel.css') }}">
+    <style>
+        /* Стили для времени */
+        #time {
+            font-size: 1.5rem;
+            color: #333;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Блок с временем -->
+    <div id="time">Загрузка времени...</div>
+
+
+
+    <!-- Контейнер для горизонтального скролла -->
+    <div class="scroll-container">
+        <div class="scroll-content">
+            <div class="item">Элемент 1</div>
+            <div class="item">Элемент 2</div>
+            <div class="item">Элемент 3</div>
+            <div class="item">Элемент 4</div>
+            <div class="item">Элемент 5</div>
+            <div class="item">Элемент 6</div>
+            <div class="item">Элемент 7</div>
+            <div class="item">Элемент 8</div>
+            <div class="item">Элемент 9</div>
+            <div class="item">Элемент 10</div>
+        </div>
+    </div>
+<script src="{{ url_for('static', filename='js/script_test_carousel.js') }}" async></script>
+    
+    <script>
+        // Функция для обновления времени
+        function updateTime() {
+            const timeElement = document.getElementById('time');
+            const now = new Date(); // Получаем текущее время
+            const hours = String(now.getHours()).padStart(2, '0'); // Часы (добавляем ведущий ноль, если нужно)
+            const minutes = String(now.getMinutes()).padStart(2, '0'); // Минуты
+            const seconds = String(now.getSeconds()).padStart(2, '0'); // Секунды
+            const timeString = `${hours}:${minutes}:${seconds}`; // Форматируем время
+            timeElement.textContent = timeString; // Выводим время в элемент
+        }
+
+        // Обновляем время каждую секунду
+        setInterval(updateTime, 1000);
+
+        // Вызываем функцию сразу, чтобы время отобразилось без задержки
+        updateTime();
+    </script>
+</body>
+</html>

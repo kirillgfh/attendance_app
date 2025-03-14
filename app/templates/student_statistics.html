@@ -1,0 +1,116 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container">
+    <h2 class="text-center mt-4">{{ student.name }}</h2>
+
+    <div class="card mt-4 mb-4 shadow-sm">
+        <div class="card-header">
+            <h4 class="mb-3">Статистика по дисциплинам</h4>
+        </div>
+        <div class="card-body">
+            <table class="table table-bordered">
+                <thead class="table-light">
+                    <tr>
+                        <th>Предмет</th>
+                        <th>Посещения</th>
+                        <th>Процент посещений</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for stat in attendance_stats %}
+                        <tr>
+                            <td>{{ stat.subject_name }}</td>
+                            <td>{{ stat.attended_count }} / {{ stat.total_classes }}</td>
+                            <td>{{ stat.attendance_percentage }}%</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="card mt-4 mb-4 shadow-sm">
+        <div class="card-header">
+            <h4 class="mb-3">Статистика по типам занятий</h4>
+        </div>
+        <div class="card-body">
+            <table class="table table-bordered">
+                <thead class="table-light">
+                    <tr>
+                        <th>Тип занятия</th>
+                        <th>Посещения</th>
+                        <th>Процент посещений</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for lesson_type, stats in lesson_type_stats.items() %}
+                        <tr>
+                            <td>
+                                {% if lesson_type == "Лек" %}
+                                    Лекции
+                                {% elif lesson_type == "Пр" %}
+                                    Семинары
+                                {% elif lesson_type == "Лаб" %}
+                                    Лабораторные работы
+                                {% else %}
+                                    {{ lesson_type }}
+                                {% endif %}
+                            </td>
+                            <td>{{ stats.attended }} / {{ stats.total }}</td>
+                            <td>{{ stats.percentage }}%</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="card mt-4 mb-4 shadow-sm">
+        <div class="card-header">
+            <h4 class="mb-3">Статистика по типам занятий для каждой дисциплины</h4>
+        </div>
+        <div class="card-body">
+            {% for subject_name, stats in subject_lesson_type_stats.items() %}
+                <div class="mb-4 p-3 border rounded bg-light">
+                    <h5 class="mb-2">{{ subject_name }}</h5>
+                    <table class="table table-bordered">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Тип занятия</th>
+                                <th>Посещения</th>
+                                <th>Процент посещений</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for lesson_type, data in stats.items() %}
+                              {% if data.total > 0 %}
+                                <tr>
+                                    <td>
+                                        {% if lesson_type == "Лек" %}
+                                            Лекции
+                                        {% elif lesson_type == "Пр" %}
+                                            Практики
+                                        {% elif lesson_type == "Лаб" %}
+                                            Лабораторные
+                                        {% else %}
+                                            {{ lesson_type }}
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ data.attended }} / {{ data.total }}</td>
+                                    <td>{{ data.percentage }}%</td>
+                                </tr>
+                              {% endif %}
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <div class="text-center mt-4">
+        <a href="{{ url_for('admin') }}" class="btn btn-secondary">Назад</a>
+    </div>
+</div>
+{% endblock %}

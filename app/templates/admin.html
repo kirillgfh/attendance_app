@@ -1,0 +1,104 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container">
+    <h2 class="text-center mt-4">Админ-панель</h2>
+    <p class="text-center">Здесь вы можете управлять системой.</p>
+
+    <!-- Кнопка создания новой группы -->
+    <div class="text-center mb-4">
+        <a href="{{ url_for('add_group') }}" class="btn btn-info mr-2">Создать новую группу</a>
+    </div>
+
+    <!-- Список групп -->
+    <div class="card mt-4">
+        <div class="card-header">
+            <h4>Список групп</h4>
+        </div>
+        <div class="card-body">
+            <ul class="list-group">
+                {% for group in groups %}
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <a href="{{ url_for('admin', group_id=group.id) }}" class="group-link">{{ group.name }}</a>
+                        <span class="attendance-badge">
+                            Общая посещаемость: {{ group.attendance_percentage }}%
+                        </span>
+                    </li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+
+    <!-- Статистика посещений для выбранной группы -->
+    {% if selected_group %}
+    <div class="card mt-4">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h4>Статистика посещений для группы: 
+                <span style="font-size: 1.5em; font-weight: bold;">{{ selected_group.name }}</span>
+            </h4>
+            <div>
+                <a href="{{ url_for('edit_group_schedule', group_id=selected_group.id) }}" class="btn btn-info mr-2">Редактировать расписание</a>
+                <a href="{{ url_for('admin', group_id=selected_group.id, view_mode='students' if view_mode == 'subjects' else 'subjects') }}" class="btn btn-secondary">
+                    {{ 'Показать по студентам' if view_mode == 'subjects' else 'Показать по предметам' }}
+                </a>
+                <a href="{{ url_for('admin') }}" class="btn btn-secondary">Закрыть</a>
+            </div>
+        </div>
+        <div class="card-body">
+            {% if view_mode == 'students' %}
+            <table class="table table-bordered">
+                <thead>
+                    <tr>
+                        <th>Студент</th>
+                        <th>Процент посещаемости всех предметов</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for stat in attendance_stats %}
+                        <tr>
+                            <td>
+                                <a href="{{ url_for('student_statistics', student_id=stat.student_id) }}">
+                                    {{ stat.student_name }}
+                                </a>
+                            </td>
+                            <td>{{ stat.attendance_percentage }}%</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% elif view_mode == 'subjects' %}
+            <table class="table table-bordered">
+                <thead>
+                    <tr>
+                        <th>Предмет</th>
+                        <th>Процент посещаемости</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for stat in subject_stats %}
+                        <tr>
+                            <td>{{ stat.subject_name }}</td>
+                            <td>{{ stat.attendance_percentage }}%</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% endif %}
+        </div>
+    </div>
+    {% else %}
+    <p>Группа не выбрана.</p>
+    {% endif %}
+
+
+    <!-- Управление пользователями -->
+    <div class="card mt-4">
+        <div class="card-header">
+            <h4>Управление пользователями</h4>
+        </div>
+        <div class="card-body">
+            <a href="{{ url_for('manage_users') }}" class="btn btn-primary">Управление пользователями</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

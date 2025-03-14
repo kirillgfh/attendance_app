@@ -1,0 +1,87 @@
+.scroll-container {
+    width: 100%;
+    overflow-x: auto;
+    white-space: nowrap;
+    border: 2px solid #ccc;
+    border-radius: 10px;
+    cursor: grab;
+    user-select: none; /* Запрещаем выделение текста при перетаскивании */
+}
+
+.scroll-container.center {
+    display: flex;
+    justify-content: center;
+    overflow-x: visible;
+    white-space: normal;
+    cursor: default;
+}
+
+.scroll-content {
+    display: flex; /* Изменено на flex для равномерного распределения */
+    padding: 10px;
+    width: 100%; /* Занимает всю ширину контейнера */
+}
+
+.item {
+    flex-grow: 1; /* Элементы растягиваются, чтобы заполнить пространство */
+    min-width: 120px; /* Минимальная ширина для мобильных устройств */
+    height: 120px; /* Увеличиваем высоту для лучшего отображения текста */
+    background-color: #4CAF50;
+    color: white;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: clamp(16px, 4vw, 24px); /* Адаптивный размер шрифта */
+    border-radius: 10px;
+    flex-shrink: 0; /* Запрещаем сжатие элементов */
+    padding: 10px; /* Внутренний отступ */
+    box-sizing: border-box; /* Учитываем padding в ширине элемента */
+    text-align: center; /* Центрируем текст по горизонтали */
+    margin-right: 10px; /* Отступ между элементами */
+}
+
+.item:last-child {
+    margin-right: 0; /* Убираем отступ у последнего элемента */
+}
+
+.item ul {
+    list-style: none; /* Убираем маркеры списка */
+    padding: 0;
+    margin: 0;
+}
+
+.item li {
+    line-height: 1.2; /* Оптимизируем межстрочный интервал */
+    white-space: normal; /* Разрешаем перенос текста */
+    margin-bottom: 10px; /* Добавляем отступ между строками */
+}
+
+.item li:last-child {
+    margin-bottom: 0; /* Убираем отступ у последнего элемента */
+}
+
+.item.today {
+    background-color: #FFA500; /* Оранжевый цвет для сегодняшнего дня */
+}
+
+.item.selected {
+    background-color: #FF6347; /* Цвет для выбранной кнопки */
+}
+
+.content {
+    margin-top: 20px;
+    padding: 20px;
+    border: 1px solid #ccc;
+    border-radius: 10px;
+    background-color: #f9f9f9;
+}
+
+
+/* Адаптация для мобильных устройств */
+@media (max-width: 600px) {
+    .item {
+        min-width: 60px; /* Еще меньше минимальная ширина для маленьких экранов */
+        height: 80px;
+        font-size: 16px; /* Еще меньше размер шрифта для маленьких экранов */
+    }
+}
