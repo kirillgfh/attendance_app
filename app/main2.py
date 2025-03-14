@@ -10,6 +10,7 @@ from get_week_type import get_week_type
 # from parse_schedule import parse_schedule
 from flask_caching import Cache
 import re
+
 from sqlalchemy.orm import joinedload
 from utils.check_access import role_required
 
