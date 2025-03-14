@@ -6,12 +6,14 @@
     <title>Университетское приложение</title>
     <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">
-    <link href="{{ url_for('static', filename='css/styles.css') }}" rel="stylesheet" >
+    <link href="{{ url_for('static', filename='css/styles.css') }}" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/nav_bar_style.css') }}" rel="stylesheet">
+ 
 </head>
 <body class="dark-theme">
     <div class="background-animation"></div>
 
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+    <nav class="navbar navbar-expand-lg navbar-dark">
         <a class="navbar-brand" href="{{ url_for('dashboard') }}">Miet</a>
         <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
             <span class="navbar-toggler-icon"></span>
@@ -70,6 +72,8 @@
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js" async></script>
     <script src="{{ url_for('static', filename='js/toggle_theme.js') }}" async></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js" async></script>
-
 </body>
 </html>
+
+
+<!-- #1257d8 -->

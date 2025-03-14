@@ -1,6 +1,9 @@
 {% extends "base.html" %}
 
 {% block content %}
+
+<script src="{{ url_for('static', filename='js/admin_sort.js') }}" defer></script>
+
 <div class="container">
     <h2 class="text-center mt-4">Админ-панель</h2>
     <p class="text-center">Здесь вы можете управлять системой.</p>
@@ -16,16 +19,15 @@
             <h4>Список групп</h4>
         </div>
         <div class="card-body">
-            <ul class="list-group">
+            <div class="groups-grid">
                 {% for group in groups %}
-                    <li class="list-group-item d-flex justify-content-between align-items-center">
-                        <a href="{{ url_for('admin', group_id=group.id) }}" class="group-link">{{ group.name }}</a>
-                        <span class="attendance-badge">
-                            Общая посещаемость: {{ group.attendance_percentage }}%
-                        </span>
-                    </li>
+                    <div class="group-card">
+                        <h4>{{ group.name }}</h4>
+                        <p class="attendance-percentage">Общая посещаемость: {{ group.attendance_percentage }}%</p>
+                        <a href="{{ url_for('admin', group_id=group.id) }}" class="btn btn-primary">Подробнее</a>
+                    </div>
                 {% endfor %}
-            </ul>
+            </div>
         </div>
     </div>
 
@@ -37,20 +39,30 @@
                 <span style="font-size: 1.5em; font-weight: bold;">{{ selected_group.name }}</span>
             </h4>
             <div>
-                <a href="{{ url_for('edit_group_schedule', group_id=selected_group.id) }}" class="btn btn-info mr-2">Редактировать расписание</a>
-                <a href="{{ url_for('admin', group_id=selected_group.id, view_mode='students' if view_mode == 'subjects' else 'subjects') }}" class="btn btn-secondary">
+                <a href="{{ url_for('edit_group_schedule', group_id=selected_group.id) }}" class="btn btn-info mr-2" style="margin-top: 5px; margin-bottom: 5px;">Редактировать расписание</a>
+                <a href="{{ url_for('admin', group_id=selected_group.id, view_mode='students' if view_mode == 'subjects' else 'subjects') }}" style="margin-top: 5px; margin-bottom: 5px;" class="btn btn-secondary">
                     {{ 'Показать по студентам' if view_mode == 'subjects' else 'Показать по предметам' }}
                 </a>
-                <a href="{{ url_for('admin') }}" class="btn btn-secondary">Закрыть</a>
+                <a href="{{ url_for('admin') }}"  style="margin-top: 5px; margin-bottom: 5px;" class="btn btn-secondary">Закрыть</a>
             </div>
         </div>
         <div class="card-body">
             {% if view_mode == 'students' %}
-            <table class="table table-bordered">
+            <table class="table table-bordered" id="attendance-table">
                 <thead>
                     <tr>
-                        <th>Студент</th>
-                        <th>Процент посещаемости всех предметов</th>
+                        <th>
+                            Студент
+                            <button id="sort-name-button" class="btn btn-sm btn-link">
+                                <i class="fas fa-sort"></i> <!-- Иконка сортировки -->
+                            </button>
+                        </th>
+                        <th>
+                            Процент посещаемости
+                            <button id="sort-percent-button" class="btn btn-sm btn-link">
+                                <i class="fas fa-sort"></i> <!-- Иконка сортировки -->
+                            </button>
+                        </th>
                     </tr>
                 </thead>
                 <tbody>
@@ -67,11 +79,21 @@
                 </tbody>
             </table>
             {% elif view_mode == 'subjects' %}
-            <table class="table table-bordered">
+            <table class="table table-bordered" id="subject-table">
                 <thead>
                     <tr>
-                        <th>Предмет</th>
-                        <th>Процент посещаемости</th>
+                        <th>
+                            Предмет
+                            <button id="sort-subject-button" class="btn btn-sm btn-link">
+                                <i class="fas fa-sort"></i> <!-- Иконка сортировки -->
+                            </button>
+                        </th>
+                        <th>
+                            Процент посещаемости
+                            <button id="sort-subject-percent-button" class="btn btn-sm btn-link">
+                                <i class="fas fa-sort"></i> <!-- Иконка сортировки -->
+                            </button>
+                        </th>
                     </tr>
                 </thead>
                 <tbody>
@@ -90,7 +112,6 @@
     <p>Группа не выбрана.</p>
     {% endif %}
 
-
     <!-- Управление пользователями -->
     <div class="card mt-4">
         <div class="card-header">
@@ -101,4 +122,8 @@
         </div>
     </div>
 </div>
+
+<!-- Подключаем FontAwesome для иконок
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet"> -->
+
 {% endblock %}

@@ -1,0 +1,75 @@
+/* Градиентный синий фон */
+.navbar {
+    background: linear-gradient(135deg, #084ca7, #0a59f5);
+    position: relative;
+    overflow: hidden;
+}
+
+/* Микросхемы (псевдоэлементы) */
+.navbar::before,
+.navbar::after {
+    content: '';
+    position: absolute;
+    background: rgba(255, 255, 255, 0.1);
+    width: 20px;
+    height: 20px;
+    border-radius: 3px;
+    transform: rotate(45deg);
+}
+
+.navbar::before {
+    top: 10%;
+    left: 5%;
+}
+
+.navbar::after {
+    bottom: 10%;
+    right: 5%;
+}
+
+/* Дополнительные микросхемы */
+.navbar .navbar-brand::before,
+.navbar .navbar-brand::after {
+    content: '';
+    position: absolute;
+    background: rgba(255, 255, 255, 0.1);
+    width: 15px;
+    height: 15px;
+    border-radius: 2px;
+    transform: rotate(45deg);
+}
+
+.navbar .navbar-brand::before {
+    top: 20px;
+    left: 50px;
+}
+
+.navbar .navbar-brand::after {
+    bottom: 20px;
+    right: 50px;
+}
+
+/* Улучшение читаемости текста */
+.navbar-brand,
+.navbar-nav .nav-link {
+    color: white !important;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.7);
+}
+
+/* Анимация для микросхем */
+@keyframes float {
+    0%, 100% {
+        transform: translateY(0) rotate(45deg);
+    }
+    50% {
+        transform: translateY(-10px) rotate(45deg);
+    }
+}
+
+.navbar::before,
+.navbar::after,
+.navbar .navbar-brand::before,
+.navbar .navbar-brand::after {
+    animation: float 6s ease-in-out infinite;
+}
+

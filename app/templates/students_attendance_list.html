@@ -26,20 +26,28 @@
                     <thead>
                         <tr>
                             <th>Студент</th>
-                            <th>Присутствие</th>
+                            <th>
+                                Присутствие
+                                <!-- Чекбокс для выделения всех -->
+                                <input type="checkbox" id="select-all" style="margin-top:5px ;margin-left: 10px; width: 20px; height: 20px;">
+                            </th>
                         </tr>
                     </thead>
                     <tbody>
                         {% for student in students %}
                             {% set student_attendance = attendance_data | selectattr("student_id", "equalto", student.id) | first %}
                             <tr>
-                                <td>{{ student.name }}</td>
+                                <td>
+                                    {{ student.name }}
+                                </td>
                                 <td>
                                     <!-- Скрытое поле для lesson_id -->
                                     <input type="hidden" name="lesson_{{ student.id }}" value="{{ lesson.id }}">
                                     <!-- Чекбокс для присутствия -->
-                                    <input type="checkbox" name="status_{{ student.id }}" value="1" style="width: 20px; height: 20px;"
-                                        {% if student_attendance and student_attendance.status %}checked{% endif %}>
+                                    <label for="status_{{ student.id }}" style="display: block; width: 100%; height: 100%;">
+                                        <input type="checkbox" id="status_{{ student.id }}" name="status_{{ student.id }}" value="1" style="width: 20px; height: 20px;"
+                                            {% if student_attendance and student_attendance.status %}checked{% endif %}>
+                                    </label>
                                 </td>
                             </tr>
                         {% endfor %}
@@ -55,5 +63,17 @@
     <!-- Кнопка "Назад" -->
     <button class="btn btn-secondary mt-3" onclick="window.history.back();">Назад</button>
 </div>
+
+<script>
+    // JavaScript для выделения всех чекбоксов
+    document.getElementById('select-all').addEventListener('click', function() {
+        // Находим все чекбоксы в таблице
+        const checkboxes = document.querySelectorAll('tbody input[type="checkbox"]');
+        // Устанавливаем состояние всех чекбоксов в соответствии с состоянием "select-all"
+        checkboxes.forEach(checkbox => {
+            checkbox.checked = this.checked;
+        });
+    });
+</script>
 
 {% endblock %}

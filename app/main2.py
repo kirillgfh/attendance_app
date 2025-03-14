@@ -222,31 +222,38 @@ def login():
 def dashboard():
     if current_user.role == 'admin':
         return redirect(url_for('admin'))  
+
+    # Получаем группу, связанную с текущим модератором
+    group = Group.query.filter_by(moderator_id=current_user.id).first()
+    if not group:
+        flash('Группа не найдена.', 'danger')
+        return redirect(url_for('index'))
+
     # Получаем выбранную дату из параметра запроса (если есть)
     selected_date_str = request.args.get('selected_date')
     if selected_date_str:
         selected_date = datetime.strptime(selected_date_str, '%Y-%m-%d').date()
     else:
         selected_date = datetime.now().date()  # По умолчанию — сегодняшняя дата
-    
+
     # Определяем тип недели
     week_type = get_week_type(selected_date)
-    
+
     # Если тип недели не определен (дата раньше начала семестра), показываем сообщение
     if week_type is None:
         flash('Семестр еще не начался.', 'info')
         return redirect(url_for('index'))
-    
+
     # Создаем список из 7 дней, где последний элемент — выбранный день
     days = [
         [(selected_date - timedelta(days=(6 - i))).strftime('%a'),  # День недели (Пн, Вт и т.д.)
          (selected_date - timedelta(days=(6 - i))).strftime('%d')]  # Число месяца
         for i in range(7)
     ]
-    
 
-    students = Student.query.filter(Student.group_id == current_user.id).all()
-    lessons = Lesson.query.filter_by(group_id=current_user.id).all()
+    # Получаем студентов и занятия только для группы модератора
+    students = Student.query.filter_by(group_id=group.id).all()
+    lessons = Lesson.query.filter_by(group_id=group.id).all()
 
     # Передаем selected_date, week_type и timedelta в шаблон
     return render_template(
@@ -263,6 +270,11 @@ def dashboard():
 @app.route('/get_lessons_for_day', methods=['GET'])
 @login_required
 def get_lessons_for_day():
+    # Получаем группу, связанную с текущим модератором
+    group = Group.query.filter_by(moderator_id=current_user.id).first()
+    if not group:
+        return jsonify({"error": "Группа не найдена"}), 404
+
     # Получаем выбранную дату из запроса
     selected_date_str = request.args.get('date')
     if not selected_date_str:
@@ -273,13 +285,14 @@ def get_lessons_for_day():
 
     # Определяем тип недели для выбранной даты
     week_type = get_week_type(selected_date)
-    # print(selected_date.weekday(), get_week_type(selected_date))
-    # Фильтруем уроки по дню недели и типу недели
+
+    # Фильтруем уроки по дню недели, типу недели и группе модератора
     lessons = Lesson.query.filter(
         Lesson.weekday == selected_date.weekday() + 1,  # weekday в базе данных: 1 - Пн, 7 - Вс
-        Lesson.week_type == week_type
+        Lesson.week_type == week_type,
+        Lesson.group_id == group.id  # Фильтруем по группе модератора
     ).all()
-    # print(lessons)
+
     # Формируем список уроков для ответа
     lessons_data = [
         {
@@ -353,15 +366,40 @@ def admin():
     groups_data = cache.get('groups_data')
     if not groups_data:
         groups = Group.query.all()
-        groups_data = [{'id': group.id, 'name': group.name} for group in groups]
+        groups_data = []
+        for group in groups:
+            # Рассчитываем общую посещаемость для каждой группы
+            total_attended = 0
+            total_classes = 0
+
+            for lesson in group.lessons:
+                attended_count = Attendance.query.filter_by(
+                    lesson_id=lesson.id,
+                    status=True
+                ).count()
+
+                total_lessons = Attendance.query.filter_by(
+                    lesson_id=lesson.id
+                ).count()
+
+                total_attended += attended_count
+                total_classes += total_lessons
+
+            attendance_percentage = (total_attended / total_classes * 100) if total_classes > 0 else 0
+
+            groups_data.append({
+                'id': group.id,
+                'name': group.name,
+                'attendance_percentage': round(attendance_percentage, 2)  # Добавляем посещаемость
+            })
         cache.set('groups_data', groups_data, timeout=300)  # Кэшируем на 5 минут
 
-    # Получаем выбранную группу (если передана в запросе)
+    # Остальной код остается без изменений
     group_id = request.args.get('group_id')
-    selected_group_data = None  # Значение по умолчанию
+    selected_group_data = None
     attendance_stats = []
     subject_stats = []
-    view_mode = request.args.get('view_mode', 'students')  # По умолчанию отображаем по студентам
+    view_mode = request.args.get('view_mode', 'students')
 
     if group_id:
         selected_group_data = cache.get(f'selected_group_data_{group_id}')
@@ -381,10 +419,9 @@ def admin():
                     'lesson_type': lesson.lesson_type
                 } for lesson in selected_group.lessons]
             }
-            cache.set(f'selected_group_data_{group_id}', selected_group_data, timeout=300)  # Кэшируем на 5 минут
+            cache.set(f'selected_group_data_{group_id}', selected_group_data, timeout=300)
 
         if view_mode == 'students':
-            # Сбор статистики посещений для выбранной группы по студентам
             attendance_stats = cache.get(f'attendance_stats_{group_id}')
             if not attendance_stats:
                 attendance_stats = []
@@ -414,10 +451,9 @@ def admin():
                         "student_name": student['name'],
                         "attendance_percentage": round(attendance_percentage, 2)
                     })
-                cache.set(f'attendance_stats_{group_id}', attendance_stats, timeout=300)  # Кэшируем на 5 минут
+                cache.set(f'attendance_stats_{group_id}', attendance_stats, timeout=300)
 
         elif view_mode == 'subjects':
-            # Сбор статистики посещений для выбранной группы по предметам
             subject_stats = cache.get(f'subject_stats_{group_id}')
             if not subject_stats:
                 subject_stats = []
@@ -448,12 +484,12 @@ def admin():
                         "subject_name": subject['name'],
                         "attendance_percentage": round(attendance_percentage, 2)
                     })
-                cache.set(f'subject_stats_{group_id}', subject_stats, timeout=300)  # Кэшируем на 5 минут
+                cache.set(f'subject_stats_{group_id}', subject_stats, timeout=300)
 
     return render_template(
         'admin.html',
         groups=groups_data,
-        selected_group=selected_group_data,  # Передаем данные в шаблон
+        selected_group=selected_group_data,
         attendance_stats=attendance_stats,
         subject_stats=subject_stats,
         view_mode=view_mode
@@ -548,8 +584,7 @@ def add_group():
         new_group = Group(name=group_name, moderator_id=moderator.id)
         db.session.add(new_group)
         db.session.commit()
-
-        # Возвращаем данные на страницу
+        cache.delete('groups_data')        # удаляем кэш данных о группах при создании новой группы.
         return render_template(
             'add_group.html',
             moderators=User.query.filter_by(role='moderator').all(),
@@ -693,7 +728,7 @@ def propagate_attendance():
 @login_required
 @role_required(['moderator'])
 def edit_group_members():
-
+    # Получаем группу, связанную с текущим модератором
     group = Group.query.filter_by(moderator_id=current_user.id).first()
     if not group:
         flash('Группа не найдена.', 'danger')
