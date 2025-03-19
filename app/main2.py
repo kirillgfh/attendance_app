@@ -1,27 +1,33 @@
+import os
 from datetime import datetime, timedelta
+from pprint import pprint
 from flask import Flask, jsonify, render_template, redirect, url_for, flash, request
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
-# from flask_migrate import Migrate
 import secrets  # Для генерации случайного пароля
 import locale
-from get_week_type import get_week_type
-# from parse_schedule import parse_schedule
+# from empty_attendances_script import create_empty_attendances
+from utils.get_schedule import get_lessons_for_group, get_subjects
+from utils.get_week_type import get_week_type
 from flask_caching import Cache
 import re
 
 from sqlalchemy.orm import joinedload
 from utils.check_access import role_required
+from flask_apscheduler import APScheduler
+from apscheduler.triggers.cron import CronTrigger
 
 # Устанавливаем русскую локаль для корректного отображения дней недели
 locale.setlocale(locale.LC_ALL, 'ru_RU.UTF-8')
 
-
-
+# Инициализация Flask-приложения
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'your_secret_key'
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///university.db'
+
+# Указываем путь к базе данных
+basedir = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))  # Переход на уровень выше
+app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{os.path.join(basedir, "instance", "university.db")}'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db = SQLAlchemy(app)
@@ -32,6 +38,12 @@ login_manager.login_view = 'login'
 # Настройка кэширования
 cache = Cache(config={'CACHE_TYPE': 'SimpleCache'})  # Используем простой in-memory кэш
 cache.init_app(app)
+
+
+# Инициализация планировщика
+scheduler = APScheduler()
+scheduler.init_app(app)
+scheduler.start()
 
 class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -44,8 +56,6 @@ class User(UserMixin, db.Model):
 
     def check_password(self, password):
         return check_password_hash(self.password_hash, password)
-    
-
 
 # Новая таблица групп
 class Group(db.Model):
@@ -114,6 +124,60 @@ class Attendance(db.Model):
     status = db.Column(db.Boolean, default=True, nullable=False)  # По умолчанию True (присутствовал)
 
 
+
+def create_empty_attendances():
+    with app.app_context():
+        # Получаем текущую дату
+        today = datetime.now().date()
+        
+        # Получаем тип недели для текущей даты
+        week_type = get_week_type(today)
+        
+        # Если тип недели не определен (например, каникулы), пропускаем
+        if not week_type:
+            print("Тип недели не определен. Сегодня, вероятно, каникулы.")
+            return
+
+        # Получаем все группы
+        groups = Group.query.all()
+
+        for group in groups:
+            # Получаем все уроки для группы на текущий день и тип недели
+            lessons = Lesson.query.filter(
+                Lesson.group_id == group.id,
+                Lesson.weekday == today.weekday() + 1,  # weekday в базе: 1 - Пн, 7 - Вс
+                Lesson.week_type == week_type
+            ).all()
+
+            if not lessons: 
+                continue 
+
+            # Получаем всех студентов группы
+            students = Student.query.filter_by(group_id=group.id).all()
+
+            for student in students:
+                for lesson in lessons:
+                    # Проверяем, существует ли уже запись о посещении для этого студента, урока и даты
+                    existing_attendance = Attendance.query.filter_by(
+                        student_id=student.id,
+                        lesson_id=lesson.id,
+                        date=today
+                    ).first()
+
+                    # Если запись не существует, создаем новую
+                    if not existing_attendance:
+                        print('yes')
+                        new_attendance = Attendance(
+                            student_id=student.id,
+                            lesson_id=lesson.id,
+                            date=today,
+                            status=False  # По умолчанию отсутствует
+                        )
+                        db.session.add(new_attendance)
+
+        db.session.commit()
+        print(f"Пустые посещения созданы для {today}.")
+
 def parse_schedule(text, week_type, group_id):
     with app.app_context():
         days_mapping = {
@@ -151,7 +215,6 @@ def parse_schedule(text, week_type, group_id):
                 lesson_number = int(lesson_match.group(1))
                 subject_name = lesson_match.group(2).strip()
                 lesson_type = lesson_match.group(3) if lesson_match.group(3) else "Пр"  # Если тип занятия отсутствует, ставим "Пр"
-                
                 subjects_set.add(subject_name)
                 lessons_list.append((subject_name, current_weekday, lesson_number, week_type, lesson_type))
         
@@ -181,6 +244,27 @@ def parse_schedule(text, week_type, group_id):
         db.session.commit()
 
 
+def commit_subjects(subjects):
+    existing_subjects = {s.name for s in Subject.query.all()}
+    for subject_name in subjects:
+        if subject_name not in existing_subjects:
+            db.session.add(Subject(name=subject_name))
+    db.session.commit()
+
+def commit_lessons(lessons):
+    subjects_dict = {s.name: s.id for s in Subject.query.all()}
+    group_dict = {s.name: s.id for s in Group.query.all()}
+    for subject_name, weekday, lesson_number, week_type, lesson_type, group_name in lessons:
+        lesson = Lesson(
+            subject_id=subjects_dict[subject_name],
+            weekday=weekday,
+            lesson_number=lesson_number,
+            week_type=week_type,
+            lesson_type=lesson_type,
+            group_id=group_dict[group_name]
+        )
+        db.session.add(lesson)
+    db.session.commit()
 
 @login_manager.user_loader
 def load_user(user_id):
@@ -324,7 +408,14 @@ def mark_attendance():
 
     selected_date = datetime.strptime(selected_date_str, '%Y-%m-%d').date()
 
-    for student in Student.query.filter(Student.group_id == 1).all():
+    # Получаем группу, связанную с текущим пользователем (модератором)
+    group = Group.query.filter_by(moderator_id=current_user.id).first()
+    if not group:
+        flash('Группа не найдена.', 'danger')
+        return redirect(url_for('dashboard'))
+
+    # Фильтруем студентов по группе, связанной с текущим пользователем
+    for student in Student.query.filter_by(group_id=group.id).all():
         lesson_id = request.form.get(f'lesson_{student.id}')
         status = request.form.get(f'status_{student.id}') == '1'
 
@@ -400,7 +491,7 @@ def admin():
     attendance_stats = []
     subject_stats = []
     view_mode = request.args.get('view_mode', 'students')
-
+    
     if group_id:
         selected_group_data = cache.get(f'selected_group_data_{group_id}')
         if not selected_group_data:
@@ -457,14 +548,22 @@ def admin():
             subject_stats = cache.get(f'subject_stats_{group_id}')
             if not subject_stats:
                 subject_stats = []
-                for lesson in selected_group_data['lessons']:
-                    subject = {
-                        'id': lesson['subject_id'],
-                        'name': lesson['subject_name']
-                    }
-                    total_attended = 0
-                    total_classes = 0
+                subject_dict = {}  # Словарь для хранения данных по каждому предмету
 
+                for lesson in selected_group_data['lessons']:
+                    subject_id = lesson['subject_id']
+                    subject_name = lesson['subject_name']
+
+                    # Если предмет еще не добавлен в словарь, добавляем его
+                    if subject_id not in subject_dict:
+                        subject_dict[subject_id] = {
+                            "subject_id": subject_id,
+                            "subject_name": subject_name,
+                            "total_attended": 0,
+                            "total_classes": 0
+                        }
+
+                    # Считаем посещаемость для текущего занятия
                     attended_count = Attendance.query.filter_by(
                         lesson_id=lesson['id'],
                         status=True
@@ -474,18 +573,25 @@ def admin():
                         lesson_id=lesson['id']
                     ).count()
 
-                    total_attended += attended_count
-                    total_classes += total_lessons
+                    # Обновляем общее количество посещений и занятий для предмета
+                    subject_dict[subject_id]['total_attended'] += attended_count
+                    subject_dict[subject_id]['total_classes'] += total_lessons
 
+                # Преобразуем словарь в список и рассчитываем процент посещаемости
+                for subject_id, data in subject_dict.items():
+                    total_attended = data['total_attended']
+                    total_classes = data['total_classes']
                     attendance_percentage = (total_attended / total_classes * 100) if total_classes > 0 else 0
 
                     subject_stats.append({
-                        "subject_id": subject['id'],
-                        "subject_name": subject['name'],
+                        "subject_id": subject_id,
+                        "subject_name": data['subject_name'],
                         "attendance_percentage": round(attendance_percentage, 2)
                     })
-                cache.set(f'subject_stats_{group_id}', subject_stats, timeout=300)
 
+                # Кэшируем результат
+                cache.set(f'subject_stats_{group_id}', subject_stats, timeout=300)
+    # pprint(subject_stats)
     return render_template(
         'admin.html',
         groups=groups_data,
@@ -504,19 +610,27 @@ def edit_group_schedule(group_id):
 
     if request.method == 'POST':
         # Обработка добавления нового расписания
-        schedule_text = request.form.get('schedule_text')
-        week_type = request.form.get('week_type')
+        group_name = group.name
 
-        if schedule_text and week_type:
-            # try:
-            # print(schedule_text)
-            # print(week_type)
-            # print(group_id)
-            # Вызываем функцию parse_schedule для обработки текста
-            parse_schedule(schedule_text, week_type, group_id)
-            flash('Расписание успешно добавлено.', 'success')
-            # except Exception as e:
-                # flash(f'Ошибка при добавлении расписания: {str(e)}', 'danger')
+        if group_name:
+            try:
+                # Получаем расписание для группы
+                raw_schedule = get_lessons_for_group(group_name)
+                subjects = get_subjects(raw_schedule)
+                lessons = get_lessons_for_group(group_name)
+
+                # Удаляем все существующие уроки для данной группы и типа недели
+                Lesson.query.filter_by(group_id=group_id).delete()
+
+                # Добавляем предметы в базу, если их нет
+                commit_subjects(subjects)
+
+                # Добавляем уроки
+                commit_lessons(lessons)
+
+                flash('Расписание успешно добавлено.', 'success')
+            except Exception as e:
+                flash(f'Ошибка при добавлении расписания: {str(e)}', 'danger')
 
             return redirect(url_for('edit_group_schedule', group_id=group.id))
 
@@ -529,7 +643,7 @@ def edit_group_schedule(group_id):
                 db.session.commit()
                 flash('Урок успешно удален.', 'success')
 
-                # 🔹 Перезагружаем объект `group`, чтобы он не был "отсоединён"
+                # Перезагружаем объект `group`, чтобы он не был "отсоединён"
                 group = Group.query.get_or_404(group_id)
 
                 return redirect(url_for('edit_group_schedule', group_id=group.id))
@@ -557,11 +671,32 @@ def manage_users():
     return render_template('manage_users.html', users=users)
 
 
+@app.route('/update_user_credentials/<int:user_id>', methods=['POST'])
+@login_required
+@role_required(['admin'])
+def update_user_credentials(user_id):
+    user = User.query.get_or_404(user_id)
+
+    
+    # Генерация нового логина и пароля
+    new_password = secrets.token_hex(8)  # Пример: 1a2b3c4d5e6f7g8h
+    
+    # Обновление данных пользователя
+    user.set_password(new_password)
+    db.session.commit()
+    
+    # Возвращаем новые данные для отображения
+    return jsonify({
+        "success": True,
+        "username": user.username,
+        "password": new_password
+    })
+
+
 @app.route('/add_group', methods=['GET', 'POST'])
 @login_required
 @role_required(['admin'])
 def add_group():
-
     if request.method == 'POST':
         group_name = request.form['group_name']
 
@@ -584,7 +719,33 @@ def add_group():
         new_group = Group(name=group_name, moderator_id=moderator.id)
         db.session.add(new_group)
         db.session.commit()
-        cache.delete('groups_data')        # удаляем кэш данных о группах при создании новой группы.
+        cache.delete('groups_data')  # Удаляем кэш данных о группах при создании новой группы.
+
+        try:
+            if group_name:
+                # Получаем расписание для группы
+                subjects = get_subjects(group_name)
+                lessons = get_lessons_for_group(group_name)
+
+                # Добавляем предметы в базу, если их нет
+                commit_subjects(subjects)
+
+                # Добавляем уроки
+                commit_lessons(lessons)
+
+                flash('Расписание успешно добавлено.', 'success')
+        except Exception as e:
+            # Если произошла ошибка, откатываем транзакцию и удаляем группу и модератора
+            db.session.rollback()  # Откат транзакции
+            db.session.delete(new_group)  # Удаляем группу
+            db.session.delete(moderator)  # Удаляем модератора
+            db.session.commit()  # Сохраняем изменения
+
+            # Выводим сообщение об ошибке
+            flash(f'Ошибка при добавлении расписания: {str(e)}', 'danger')
+            flash('Группа не была создана из-за ошибки.', 'danger')
+            return redirect(url_for('add_group'))
+
         return render_template(
             'add_group.html',
             moderators=User.query.filter_by(role='moderator').all(),
@@ -601,6 +762,7 @@ def add_group():
         created_username=None,
         created_password=None
     )
+
 
 @app.route('/delete_user/<int:user_id>', methods=['POST'])
 @login_required
@@ -774,49 +936,41 @@ def edit_group_members():
 @login_required
 @role_required(['admin'])
 def student_statistics(student_id):
-
     student = Student.query.get_or_404(student_id)
     attendances = Attendance.query.filter_by(student_id=student.id).all()
 
-    # Собираем статистику по каждому предмету
-    attendance_stats = []
-    # Собираем статистику по типам занятий
+    # Словарь для хранения статистики по предметам
+    subject_stats_dict = {}
+    # Словарь для хранения статистики по типам занятий
     lesson_type_stats = {
         "Лек": {"attended": 0, "total": 0},
         "Пр": {"attended": 0, "total": 0},
         "Лаб": {"attended": 0, "total": 0},
     }
-    # Собираем статистику по типам занятий для каждого предмета
+    # Словарь для хранения статистики по типам занятий для каждого предмета
     subject_lesson_type_stats = {}
 
     for attendance in attendances:
         lesson = Lesson.query.get(attendance.lesson_id)
         subject = Subject.query.get(lesson.subject_id)
 
-        attended_count = Attendance.query.filter_by(
-            student_id=student.id,
-            lesson_id=lesson.id,
-            status=True
-        ).count()
+        # Если предмет еще не добавлен в словарь, добавляем его
+        if subject.name not in subject_stats_dict:
+            subject_stats_dict[subject.name] = {
+                "subject_name": subject.name,
+                "attended_count": 0,
+                "total_classes": 0,
+                "attendance_percentage": 0
+            }
 
-        total_lessons = Attendance.query.filter_by(
-            student_id=student.id,
-            lesson_id=lesson.id
-        ).count()
-
-        attendance_percentage = (attended_count / total_lessons * 100) if total_lessons > 0 else 0
-
-        attendance_stats.append({
-            "subject_name": subject.name,
-            "attended_count": attended_count,
-            "total_classes": total_lessons,
-            "attendance_percentage": round(attendance_percentage, 2)
-        })
+        # Обновляем статистику по предмету
+        subject_stats_dict[subject.name]["attended_count"] += 1 if attendance.status else 0
+        subject_stats_dict[subject.name]["total_classes"] += 1
 
         # Обновляем статистику по типам занятий
         if lesson.lesson_type in lesson_type_stats:
-            lesson_type_stats[lesson.lesson_type]["attended"] += attended_count
-            lesson_type_stats[lesson.lesson_type]["total"] += total_lessons
+            lesson_type_stats[lesson.lesson_type]["attended"] += 1 if attendance.status else 0
+            lesson_type_stats[lesson.lesson_type]["total"] += 1
 
         # Обновляем статистику по типам занятий для каждого предмета
         if subject.name not in subject_lesson_type_stats:
@@ -827,8 +981,19 @@ def student_statistics(student_id):
             }
 
         if lesson.lesson_type in subject_lesson_type_stats[subject.name]:
-            subject_lesson_type_stats[subject.name][lesson.lesson_type]["attended"] += attended_count
-            subject_lesson_type_stats[subject.name][lesson.lesson_type]["total"] += total_lessons
+            subject_lesson_type_stats[subject.name][lesson.lesson_type]["attended"] += 1 if attendance.status else 0
+            subject_lesson_type_stats[subject.name][lesson.lesson_type]["total"] += 1
+
+    # Рассчитываем процент посещаемости для каждого предмета
+    attendance_stats = []
+    for subject_name, stats in subject_stats_dict.items():
+        attendance_percentage = (stats["attended_count"] / stats["total_classes"] * 100) if stats["total_classes"] > 0 else 0
+        attendance_stats.append({
+            "subject_name": subject_name,
+            "attended_count": stats["attended_count"],
+            "total_classes": stats["total_classes"],
+            "attendance_percentage": round(attendance_percentage, 2)
+        })
 
     # Рассчитываем процент посещаемости для каждого типа занятий
     for lesson_type, stats in lesson_type_stats.items():
@@ -928,15 +1093,15 @@ if __name__ == '__main__':
             db.session.add(test_subject)
             db.session.commit()
 
-
+    scheduler.add_job(
+        id='create_empty_attendances',
+        func=create_empty_attendances,
+        trigger=CronTrigger(hour=0, minute=1),  # Запуск каждый день в 00:01
+        replace_existing=True
+    )
 
 
 
     cache.delete('groups_data')
     app.run(debug=True)
-
-
-
-
-
 

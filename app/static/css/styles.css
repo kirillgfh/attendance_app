@@ -119,3 +119,22 @@
 .group-card .btn:hover {
     background-color: #0f4cb0; /* Темный оттенок основного цвета */
 }
+
+html, body {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.navbar {
+    flex-shrink: 0; /* Запрещает сжиматься */
+}
+
+.container {
+    flex: 1; /* Растягивает контент, чтобы футер был внизу */
+}
+
+.footer {
+    flex-shrink: 0; /* Запрещает сжиматься */
+    /* background-color: #f8f9fa; */
+}
