@@ -24,11 +24,19 @@
                     <div class="group-card">
                         <h4>{{ group.name }}</h4>
                         <p class="attendance-percentage">Общая посещаемость: {{ group.attendance_percentage }}%</p>
-                        <a href="{{ url_for('admin', group_id=group.id) }}" class="btn btn-primary">Подробнее</a>
+                        <a href="{{ url_for('admin', group_id=group.id) }}" class="btn btn-primary" onclick="showLoading()">Подробнее</a>
                     </div>
                 {% endfor %}
             </div>
         </div>
+    </div>
+
+    <!-- Индикатор загрузки -->
+    <div id="loading" style="display: none; text-align: center; margin-top: 20px;">
+        <div class="spinner-border text-primary" role="status">
+            <span class="sr-only">Загрузка...</span>
+        </div>
+        <p>Загрузка данных...</p>
     </div>
 
     <!-- Статистика посещений для выбранной группы -->
@@ -39,7 +47,6 @@
                 <span style="font-size: 1.5em; font-weight: bold;">{{ selected_group.name }}</span>
             </h4>
             <div>
-                <!-- <a href="{{ url_for('edit_group_schedule', group_id=selected_group.id) }}" class="btn btn-info mr-2" style="margin-top: 5px; margin-bottom: 5px;">Редактировать расписание</a> -->
                 <a href="{{ url_for('admin', group_id=selected_group.id, view_mode='students' if view_mode == 'subjects' else 'subjects') }}" style="margin-top: 5px; margin-bottom: 5px;" class="btn btn-primary">
                     {{ 'Показать по студентам' if view_mode == 'subjects' else 'Показать по предметам' }}
                 </a>
@@ -111,19 +118,22 @@
     {% else %}
     <p>Группа не выбрана.</p>
     {% endif %}
-
-    <!-- Управление пользователями -->
-    <!-- <div class="card mt-4">
-        <div class="card-header">
-            <h4>Управление пользователями</h4>
-        </div>
-        <div class="card-body">
-            <a href="{{ url_for('manage_users') }}" class="btn btn-primary">Управление пользователями</a>
-        </div>
-    </div> -->
 </div>
 
-<!-- Подключаем FontAwesome для иконок
-<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet"> -->
+<!-- Скрипт для управления индикатором загрузки -->
+<script>
+    function showLoading() {
+        // Показываем индикатор загрузки
+        document.getElementById('loading').style.display = 'block';
+    }
+
+    // Скрываем индикатор загрузки после завершения загрузки страницы
+    window.addEventListener('load', function() {
+        document.getElementById('loading').style.display = 'none';
+    });
+</script>
+
+<!-- Подключаем FontAwesome для иконок -->
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">
 
 {% endblock %}

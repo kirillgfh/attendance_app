@@ -1,14 +1,11 @@
 from datetime import datetime
 from flask_apscheduler import APScheduler
 from apscheduler.triggers.cron import CronTrigger
-
 from utils.get_week_type import get_week_type
-
-# from main2 import app, db
-
+from main2 import app, db, Group, Lesson, Student, Attendance
 
 
-def create_empty_attendances(app, db,  Group, Lesson, Student, Attendance):
+def create_empty_attendances():
     with app.app_context():
         # Получаем текущую дату
         today = datetime.now().date()
@@ -60,6 +57,10 @@ def create_empty_attendances(app, db,  Group, Lesson, Student, Attendance):
         db.session.commit()
         print(f"Пустые посещения созданы для {today}.")
 
+
+
+
+create_empty_attendances()
 # Настройка задачи для ежедневного выполнения в 00:01
 # scheduler.add_job(
 #     id='create_empty_attendances',

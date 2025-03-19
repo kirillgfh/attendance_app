@@ -43,7 +43,7 @@ cache.init_app(app)
 # Инициализация планировщика
 scheduler = APScheduler()
 scheduler.init_app(app)
-scheduler.start()
+# scheduler.start()
 
 class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
