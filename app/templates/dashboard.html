@@ -11,8 +11,8 @@
             {% for i in range(days|length) %}
             <div class="item {% if i == today_index %}today{% endif %}" data-index="{{ i }}" data-date="{{ (today - timedelta(days=(6 - i))).strftime('%Y-%m-%d') }}" id="selected-date">
                 <ul>
-                    <li>{{ days[i][0] }}</li> <!-- День недели (Пн, Вт и т.д.) -->
-                    <li>{{ days[i][1] }}</li> <!-- Число месяца -->
+                    <li class="font_Pixel_bold_400">{{ days[i][0] }}</li> <!-- День недели (Пн, Вт и т.д.) -->
+                    <li class="font_Pixel_bold_400">{{ days[i][1] }}</li> <!-- Число месяца -->
                 </ul>
             </div>
             {% endfor %}

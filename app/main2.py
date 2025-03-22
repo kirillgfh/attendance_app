@@ -676,11 +676,8 @@ def manage_users():
 @role_required(['admin'])
 def update_user_credentials(user_id):
     user = User.query.get_or_404(user_id)
-
-    
     # Генерация нового логина и пароля
-    new_password = secrets.token_hex(8)  # Пример: 1a2b3c4d5e6f7g8h
-    
+    new_password = secrets.token_hex(6)
     # Обновление данных пользователя
     user.set_password(new_password)
     db.session.commit()
@@ -775,7 +772,7 @@ def delete_user(user_id):
     flash('Пользователь успешно удален.', 'success')
     return redirect(url_for('manage_users'))
 
-@app.route('/logout')
+@app.route('/logout', methods=['POST'])
 @login_required
 def logout():
     logout_user()

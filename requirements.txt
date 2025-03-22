@@ -10,4 +10,3 @@ flask-apscheduler==1.12.4
 apscheduler==3.10.4
 
 
-//инструкция по запуску: mkvirtualenv flaskenv -> pip install -r requirements.txt -> удалить папку -> git clone https://github.com/kirillgfh/attendance_app.gi 

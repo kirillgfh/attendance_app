@@ -53,11 +53,12 @@ document.addEventListener('DOMContentLoaded', function () {
                         card.classList.add('lesson-card');
                         card.innerHTML = `
                             <h4>${lesson.subject_name}</h4>
-                            <p class="lesson-type">${lesson.lesson_type}</p>
-                            <p class="lesson-number">${lesson.lesson_number} пара</p>
+                            <div class="lesson-info">
+                                <p class="lesson-type">${lesson.lesson_type}</p>
+                                <p class="lesson-number">${lesson.lesson_number} пара</p>
+                            </div>
                         `;
                         card.onclick = () => {
-                            // Переход на страницу students_attendance_list
                             if (lesson.id) {
                                 window.location.href = `/students_attendance_list/${lesson.id}?selected_date=${selectedDate}`;
                             } else {
@@ -66,6 +67,7 @@ document.addEventListener('DOMContentLoaded', function () {
                         };
                         lessonsList.appendChild(card);
                     });
+                    
 
                     // Обновляем контент
                     contentDiv.textContent = `Выбран день: ${selectedDate}`;

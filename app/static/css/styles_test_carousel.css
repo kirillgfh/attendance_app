@@ -95,6 +95,9 @@
 
 /* Стили для карточки урока */
 .lesson-card {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between; /* Равномерное распределение контента */
     background-color: #ffffff;
     border: 1px solid #e0e0e0;
     border-radius: 10px;
@@ -102,17 +105,20 @@
     padding: 20px;
     transition: transform 0.2s, box-shadow 0.2s;
     cursor: pointer;
+    position: relative;
+    min-height: 150px;
 }
 
-.lesson-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
-}
-
+/* Заголовок остается вверху */
 .lesson-card h4 {
     margin: 0 0 10px;
     font-size: 1.25rem;
-    color: #1257d8; /* Основной цвет */
+    color: #1257d8;
+}
+
+/* Контейнер для информации о типе и номере пары */
+.lesson-info {
+    margin-top: auto; /* Прижимает информацию вниз */
 }
 
 .lesson-card p {
@@ -121,9 +127,10 @@
     color: #555;
 }
 
+/* Дополнительные стили для выравнивания */
 .lesson-card .lesson-type {
     font-weight: bold;
-    color: #0a3a8c; /* Темный оттенок основного цвета */
+    color: #0a3a8c;
 }
 
 .lesson-card .lesson-number {

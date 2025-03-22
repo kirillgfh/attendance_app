@@ -138,3 +138,33 @@ html, body {
     flex-shrink: 0; /* Запрещает сжиматься */
     /* background-color: #f8f9fa; */
 }
+
+
+
+@font-face {
+    font-family: 'Pixel_bold_400';
+    src: url('../fonts/Pixel_bold_400.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'Nothing_phone_400';
+    src: url('../fonts/Nothing_font_400.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+}
+
+.font_Pixel_bold_400 {
+    font-family: 'Pixel_bold_400', sans-serif;
+}
+
+.font_Nothing_phone_400 {
+    font-family: 'Nothing_phone_400', sans-serif;
+}
+
+.spinner-border {
+    width: 1rem;
+    height: 1rem;
+    border-width: 0.2em;
+}

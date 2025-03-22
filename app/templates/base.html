@@ -62,9 +62,11 @@
             <!-- Кнопка переключения темы и выход -->
             <ul class="navbar-nav ml-auto">
                 {% if current_user.is_authenticated %}
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('logout') }}">Выйти</a>
-                    </li>
+                <li class="nav-item">
+                    <form action="{{ url_for('logout') }}" method="POST" class="d-inline">
+                        <button type="submit" class="nav-link btn btn-link" style="border: none; background: none; cursor: pointer;">Выйти</button>
+                    </form>
+                </li>
                 {% endif %}
                 <li class="nav-item">
                     <!-- <button id="theme-toggle" class="btn btn-outline-light">
@@ -103,7 +105,7 @@
     <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js" defer></script>
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.2/dist/umd/popper.min.js" defer></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js" defer></script>
-    <script src="{{ url_for('static', filename='js/toggle_theme.js') }}" defer></script>
+    <!-- <script src="{{ url_for('static', filename='js/toggle_theme.js') }}" defer></script> -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js" defer></script>
 </body>
 </html>
