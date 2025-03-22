@@ -43,7 +43,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
                     // Обновляем тип недели
                     weekTypeSpan.textContent = data.week_type;
-
+                    console.log(weekTypeSpan.textContent, weekTypeSpan);
                     // Очищаем список уроков
                     lessonsList.innerHTML = '';
 

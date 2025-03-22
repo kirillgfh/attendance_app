@@ -1,9 +1,12 @@
 from datetime import date
 
-def get_week_type(target_date):
+def get_week_type(target_date, full_name=False):
     semester_start = date(2025, 2, 5)  # Начало семестра (среда)
+
+
     week_types = ["1ч", "1з", "2ч", "2з"]  # Чередование недель
-    
+    if full_name:
+        week_types = ["1 числитель", "1 знаминатель", "2 числитель", "2 знаминатель"]  # Чередование недель
     # Вычисляем количество дней между датами
     delta_days = (target_date - semester_start).days
     

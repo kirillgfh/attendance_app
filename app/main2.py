@@ -369,6 +369,7 @@ def get_lessons_for_day():
 
     # Определяем тип недели для выбранной даты
     week_type = get_week_type(selected_date)
+    week_type_fullname = get_week_type(selected_date, full_name=True)
 
     # Фильтруем уроки по дню недели, типу недели и группе модератора
     lessons = Lesson.query.filter(
@@ -390,7 +391,7 @@ def get_lessons_for_day():
 
     return jsonify({
         "lessons": lessons_data,
-        "week_type": week_type
+        "week_type": week_type_fullname
     })
 
 
