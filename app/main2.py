@@ -41,8 +41,8 @@ cache.init_app(app)
 
 
 # Инициализация планировщика
-scheduler = APScheduler()
-scheduler.init_app(app)
+# scheduler = APScheduler()
+# scheduler.init_app(app)
 # scheduler.start()
 
 class User(UserMixin, db.Model):
@@ -242,7 +242,6 @@ def parse_schedule(text, week_type, group_id):
             db.session.add(lesson)
         
         db.session.commit()
-
 
 def commit_subjects(subjects):
     existing_subjects = {s.name for s in Subject.query.all()}
@@ -930,6 +929,7 @@ def edit_group_members():
 
     return render_template('edit_group_members.html', students=students, group=group)
 
+
 @app.route('/student_statistics/<int:student_id>')
 @login_required
 @role_required(['admin'])
@@ -1091,12 +1091,12 @@ if __name__ == '__main__':
             db.session.add(test_subject)
             db.session.commit()
 
-    scheduler.add_job(
-        id='create_empty_attendances',
-        func=create_empty_attendances,
-        trigger=CronTrigger(hour=0, minute=1),  # Запуск каждый день в 00:01
-        replace_existing=True
-    )
+    # scheduler.add_job(
+    #     id='create_empty_attendances',
+    #     func=create_empty_attendances,
+    #     trigger=CronTrigger(hour=0, minute=1),  # Запуск каждый день в 00:01
+    #     replace_existing=True
+    # )
 
 
 
