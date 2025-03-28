@@ -6,7 +6,8 @@
     <title>Платформа МПСУ</title>
     <link rel="icon" href="{{ url_for('static', filename='img/favicon.ico') }}" type="image/x-icon">
     <link rel="icon" href="{{ url_for('static', filename='img/logo.svg') }}" type="image/svg+xml">
-    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Только Bootstrap 4.5.2 CSS -->
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-JcKb8q3iqJ61gNV9KGb8thSsNjpSL0n8PARn9HuZOnIxN0hoP+VmmDGMN5t9UJ0Z" crossorigin="anonymous">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">
     <link href="{{ url_for('static', filename='css/styles.css') }}" rel="stylesheet">
     <link href="{{ url_for('static', filename='css/nav_bar_style.css') }}" rel="stylesheet">
@@ -31,32 +32,26 @@
         <div class="collapse navbar-collapse" id="navbarNav">
             <ul class="navbar-nav">
                 {% if current_user.is_authenticated %}
-
                     {% if current_user.role == 'moderator' %}
                     <li class="nav-item">
                         <a class="nav-link" href="{{ url_for('dashboard') }}">Главная</a>
                     </li>
-                    {% endif %}
-                    {% if current_user.role == 'moderator' %}
-                        <li class="nav-item">
-                            <a class="nav-link" href="{{ url_for('edit_group_members') }}">Редактировать список одногруппников</a>
-                        </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('edit_group_members') }}">Редактировать список одногруппников</a>
+                    </li>
                     {% endif %}
                     {% if current_user.role == 'admin' %}
-                        <li class="nav-item">
-                            <a class="nav-link" href="{{ url_for('admin') }}">Админ панель</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="{{ url_for('manage_users') }}">Редактировать пользователей</a>
-                        </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('admin') }}">Админ панель</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('manage_users') }}">Редактировать пользователей</a>
+                    </li>
                     {% endif %}
                 {% else %}
                     <li class="navbar-brand">
                         <img src="{{ url_for('static', filename='img/logo.svg') }}" alt="Miet Logo" style="height: 32px;">
                     </li>
-                    <!-- <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('login') }}">Войти</a>
-                    </li> -->
                 {% endif %}
             </ul>
             <!-- Кнопка переключения темы и выход -->
@@ -100,10 +95,11 @@
         </div>
     </footer>
 
-    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js" defer></script>
-    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.2/dist/umd/popper.min.js" defer></script>
-    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js" defer></script>
-    <!-- <script src="{{ url_for('static', filename='js/toggle_theme.js') }}" defer></script> -->
+    <!-- Popper.js и Bootstrap 4.5.2 JS (без jQuery) -->
+    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js" integrity="sha384-9/reFTGAW83EW2RDu2S0VKaIzap3H66lZH81PoYlFhbGU+6BZp6G7niu735Sk7lN" crossorigin="anonymous" defer></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js" integrity="sha384-B4gt1jrGC7Jh4AgTPSdUtOBvfO8shuf57BaghqFfPlYxofvL8/KUEfYiJOMMV+rV" crossorigin="anonymous" defer></script>
+    <!-- Chart.js, если нужен -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js" defer></script>
+    {% block scripts %}{% endblock %}
 </body>
 </html>

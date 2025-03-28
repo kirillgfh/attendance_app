@@ -352,6 +352,7 @@ def dashboard():
 
 @app.route('/get_lessons_for_day', methods=['GET'])
 @login_required
+@role_required(['moderator'])
 def get_lessons_for_day():
     # Получаем группу, связанную с текущим модератором
     group = Group.query.filter_by(moderator_id=current_user.id).first()
@@ -392,8 +393,6 @@ def get_lessons_for_day():
         "lessons": lessons_data,
         "week_type": week_type_fullname
     })
-
-
 
 
 
@@ -601,57 +600,78 @@ def admin():
         view_mode=view_mode
     )
 
+
+
+
 @app.route('/edit_group_schedule/<int:group_id>', methods=['GET', 'POST'])
 @login_required
 @role_required(['admin'])
 def edit_group_schedule(group_id):
     group = Group.query.get_or_404(group_id)
     lessons = Lesson.query.filter_by(group_id=group.id).all()
+    subjects = Subject.query.all()
+
+    # Define week types with full names
+    week_types = {
+        '1ч': '1 числитель',
+        '1з': '1 знаменатель',
+        '2ч': '2 числитель',
+        '2з': '2 знаменатель'
+    }
 
     if request.method == 'POST':
-        # Обработка добавления нового расписания
-        group_name = group.name
+        action = request.form.get('action')
+        if action == 'add_lesson':
+            subject_id = request.form.get('subject_id')
+            weekday = int(request.form.get('weekday'))
+            lesson_number = int(request.form.get('lesson_number'))
+            week_type = request.form.get('week_type')
+            lesson_type = request.form.get('lesson_type')
+            new_lesson = Lesson(
+                subject_id=subject_id, group_id=group_id, weekday=weekday,
+                lesson_number=lesson_number, week_type=week_type, lesson_type=lesson_type
+            )
+            db.session.add(new_lesson)
+            db.session.commit()
+            flash('Урок успешно добавлен.', 'success')
+            return redirect(url_for('edit_group_schedule', group_id=group_id))
 
-        if group_name:
-            try:
-                # Получаем расписание для группы
-                raw_schedule = get_lessons_for_group(group_name)
-                subjects = get_subjects(raw_schedule)
-                lessons = get_lessons_for_group(group_name)
+        elif action == 'edit_lesson':
+            lesson_id = request.form.get('lesson_id')
+            lesson = Lesson.query.get_or_404(lesson_id)
+            lesson.subject_id = request.form.get('subject_id')
+            lesson.weekday = int(request.form.get('weekday'))
+            lesson.lesson_number = int(request.form.get('lesson_number'))
+            lesson.week_type = request.form.get('week_type')
+            lesson.lesson_type = request.form.get('lesson_type')
+            db.session.commit()
+            flash('Урок успешно отредактирован.', 'success')
+            return redirect(url_for('edit_group_schedule', group_id=group_id))
 
-                # Удаляем все существующие уроки для данной группы и типа недели
-                Lesson.query.filter_by(group_id=group_id).delete()
-
-                # Добавляем предметы в базу, если их нет
-                commit_subjects(subjects)
-
-                # Добавляем уроки
-                commit_lessons(lessons)
-
-                flash('Расписание успешно добавлено.', 'success')
-            except Exception as e:
-                flash(f'Ошибка при добавлении расписания: {str(e)}', 'danger')
-
-            return redirect(url_for('edit_group_schedule', group_id=group.id))
-
-        # Обработка удаления урока
-        delete_lesson_id = request.form.get('delete_lesson_id')
-        if delete_lesson_id:
+        elif 'delete_lesson_id' in request.form:
+            delete_lesson_id = request.form.get('delete_lesson_id')
             lesson_to_delete = Lesson.query.get(delete_lesson_id)
             if lesson_to_delete:
                 db.session.delete(lesson_to_delete)
                 db.session.commit()
                 flash('Урок успешно удален.', 'success')
+            return redirect(url_for('edit_group_schedule', group_id=group_id))
 
-                # Перезагружаем объект `group`, чтобы он не был "отсоединён"
-                group = Group.query.get_or_404(group_id)
+        else:
+            week_type = request.form.get('week_type')
+            schedule_text = request.form.get('schedule_text')
+            try:
+                parse_schedule(schedule_text, week_type, group_id)
+                flash('Расписание успешно добавлено.', 'success')
+            except Exception as e:
+                flash(f'Ошибка при добавлении расписания: {str(e)}', 'danger')
+            return redirect(url_for('edit_group_schedule', group_id=group_id))
 
-                return redirect(url_for('edit_group_schedule', group_id=group.id))
-
-    # Получаем список всех предметов для выпадающего списка (если нужно)
-    subjects = Subject.query.all()
-
-    return render_template('edit_group_schedule.html', group=group, lessons=lessons, subjects=subjects)
+    return render_template('edit_group_schedule.html', 
+                         group=group, 
+                         lessons=lessons, 
+                         subjects=subjects,
+                         week_types=week_types)
 
 @app.route('/manage_users')
 @login_required
