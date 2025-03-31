@@ -1,28 +1,52 @@
 {% extends "base.html" %}
 
 {% block content %}
+<style>
+    .border-radius-8px {
+        border-radius: 8px;
+    }
+    /* Стиль для градиентной окантовки таблиц */
+    .gradient-border-table {
+        border: 2px solid transparent;
+        background: linear-gradient(white, white) padding-box,
+                    linear-gradient(135deg, #084ca7, #0a59f5) border-box;
+        overflow: hidden;
+    }
+    
+    /* Стиль для градиентного заголовка */
+
+    /* Сохраняем стандартные стили для содержимого */
+
+</style>
 <div class="container">
     <h2 class="text-center mt-4">{{ student.name }}</h2>
 
-    <div class="card mt-4 mb-4 shadow-sm">
+    <div class="card mt-4 mb-4 gradient-border-table">
         <div class="card-header">
-            <h4 class="mb-3">Статистика по дисциплинам</h4>
+            <h4 class="mb-3"><i class="bi bi-book me-2 text-primary"></i>Статистика по дисциплинам</h4>
         </div>
         <div class="card-body">
-            <table class="table table-bordered">
+            <table class="table table-bordered table-hover">
                 <thead class="table-light">
                     <tr>
                         <th>Предмет</th>
-                        <th>Посещения</th>
-                        <th>Процент посещений</th>
+                        <th class="text-center">Посещения</th>
+                        <th class="text-center">Процент</th>
                     </tr>
                 </thead>
                 <tbody>
                     {% for stat in attendance_stats %}
                         <tr>
                             <td>{{ stat.subject_name }}</td>
-                            <td>{{ stat.attended_count }} / {{ stat.total_classes }}</td>
-                            <td>{{ stat.attendance_percentage }}%</td>
+                            <td class="text-center">{{ stat.attended_count }} / {{ stat.total_classes }}</td>
+                            <td class="text-center">
+                                <div class="progress" style="height: 24px;">
+                                    <div class="progress-bar" 
+                                        style="width: {{ stat.attendance_percentage }}%">
+                                        {{ stat.attendance_percentage }}%
+                                    </div>
+                                </div>
+                            </td>
                         </tr>
                     {% endfor %}
                 </tbody>
@@ -30,24 +54,30 @@
         </div>
     </div>
 
-    <div class="card mt-4 mb-4 shadow-sm">
+    <div class="card mt-4 mb-4 gradient-border-table">
         <div class="card-header">
-            <h4 class="mb-3">Статистика по типам занятий</h4>
+            <h4 class="mb-3"><i class="bi bi-clipboard-data me-2 text-primary"></i>Статистика по типам занятий</h4>
         </div>
         <div class="card-body">
             <table class="table table-bordered">
                 <thead class="table-light">
                     <tr>
                         <th>Тип занятия</th>
-                        <th>Посещения</th>
-                        <th>Процент посещений</th>
+                        <th class="text-center">Посещения</th>
+                        <th class="text-center">Процент</th>
                     </tr>
                 </thead>
                 <tbody>
                     {% for lesson_type, stats in lesson_type_stats.items() %}
                         <tr>
                             <td>
-                                {% if lesson_type == "Лек" %}
+                                <i class="bi 
+                                            {% if lesson_type == "Лек" %}bi-mortarboard text-primary
+                                            {% elif lesson_type == "Пр" %}bi-pencil-square text-primary
+                                            {% elif lesson_type == "Лаб" %}bi-eyeglasses text-primary
+                                            {% endif %} 
+                                            me-2"></i>
+                                {% if lesson_type == "Лек" %} 
                                     Лекции
                                 {% elif lesson_type == "Пр" %}
                                     Семинары
@@ -57,8 +87,15 @@
                                     {{ lesson_type }}
                                 {% endif %}
                             </td>
-                            <td>{{ stats.attended }} / {{ stats.total }}</td>
-                            <td>{{ stats.percentage }}%</td>
+                            <td class="text-center"> {{ stats.attended }} / {{ stats.total }}</td>
+                            <td class="text-center">
+                                <div class="progress" style="height: 24px;">
+                                    <div class="progress-bar" 
+                                         style="width: {{ stats.percentage }}%">
+                                        {{ stats.percentage }}%
+                                    </div>
+                                </div>
+                            </td>
                         </tr>
                     {% endfor %}
                 </tbody>
@@ -66,9 +103,10 @@
         </div>
     </div>
 
-    <div class="card mt-4 mb-4 shadow-sm">
+    <div class="card mt-4 mb-4 gradient-border-table">
         <div class="card-header">
-            <h4 class="mb-3">Статистика по типам занятий для каждой дисциплины</h4>
+            <h4 class="mb-3"><i class="bi bi-bar-chart me-2 text-primary"></i>Статистика по типам занятий для каждой дисциплины</h4>
+        
         </div>
         <div class="card-body">
             {% for subject_name, stats in subject_lesson_type_stats.items() %}
@@ -78,8 +116,8 @@
                         <thead class="table-light">
                             <tr>
                                 <th>Тип занятия</th>
-                                <th>Посещения</th>
-                                <th>Процент посещений</th>
+                                <th class="text-center">Посещения</th>
+                                <th class="text-center">Процент</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -87,18 +125,25 @@
                               {% if data.total > 0 %}
                                 <tr>
                                     <td>
-                                        {% if lesson_type == "Лек" %}
-                                            Лекции
-                                        {% elif lesson_type == "Пр" %}
-                                            Семинары
-                                        {% elif lesson_type == "Лаб" %}
-                                            Лабораторные
-                                        {% else %}
-                                            {{ lesson_type }}
-                                        {% endif %}
+                                        <i class="bi 
+                                            {% if lesson_type == "Лек" %}bi-mortarboard text-primary
+                                            {% elif lesson_type == "Пр" %}bi-pencil-square text-primary
+                                            {% elif lesson_type == "Лаб" %}bi-eyeglasses text-primary
+                                            {% endif %} 
+                                        me-2"></i>
+                                        {{ 'Лекции' if lesson_type == "Лек" else 
+                                           'Семинары' if lesson_type == "Пр" else 
+                                           'Лабораторные' }}
                                     </td>
-                                    <td>{{ data.attended }} / {{ data.total }}</td>
-                                    <td>{{ data.percentage }}%</td>
+                                    <td class="text-center"> {{ data.attended }} / {{ data.total }}</td>
+                                    <td class="text-center">
+                                        <div class="progress" style="height: 24px;">
+                                            <div class="progress-bar" 
+                                                 style="width: {{ data.percentage }}%">
+                                                {{ data.percentage }}%
+                                            </div>
+                                        </div>
+                                    </td>
                                 </tr>
                               {% endif %}
                             {% endfor %}
@@ -110,7 +155,8 @@
     </div>
 
     <div class="text-center mt-4">
-        <a href="{{ url_for('admin') }}" class="btn btn-secondary">Назад</a>
+        <button class="btn btn-secondary mt-3" onclick="window.history.back();">Назад</button>
+        <!-- <a href="{{ url_for('admin') }}" class="btn btn-secondary">Назад</a> -->
     </div>
 </div>
 {% endblock %}

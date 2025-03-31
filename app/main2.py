@@ -480,15 +480,16 @@ def admin():
             groups_data.append({
                 'id': group.id,
                 'name': group.name,
-                'attendance_percentage': round(attendance_percentage, 2)  # Добавляем посещаемость
+                'attendance_percentage': round(attendance_percentage, 2)
             })
-        cache.set('groups_data', groups_data, timeout=300)  # Кэшируем на 5 минут
+        cache.set('groups_data', groups_data, timeout=300)
 
-    # Остальной код остается без изменений
     group_id = request.args.get('group_id')
     selected_group_data = None
     attendance_stats = []
     subject_stats = []
+    weekly_attendance = []
+    dates = []
     view_mode = request.args.get('view_mode', 'students')
     
     if group_id:
@@ -510,6 +511,43 @@ def admin():
                 } for lesson in selected_group.lessons]
             }
             cache.set(f'selected_group_data_{group_id}', selected_group_data, timeout=300)
+
+        # Добавляем данные для графика посещаемости за последнюю неделю
+        weekly_attendance = []
+        dates = []
+        
+        for i in range(6, -1, -1):  # Последние 7 дней
+            date = datetime.now().date() - timedelta(days=i)
+            dates.append(date)
+            
+            total_attended = 0
+            total_classes = 0
+            
+            for lesson in selected_group_data['lessons']:  # Используем данные из кэша
+                if lesson['weekday'] == date.weekday() + 1:
+                    week_type = get_week_type(date)
+                    if lesson['week_type'] == week_type:
+                        attended = Attendance.query.filter_by(
+                            lesson_id=lesson['id'],
+                            date=date,
+                            status=True
+                        ).count()
+                        
+                        total = Attendance.query.filter_by(
+                            lesson_id=lesson['id'],
+                            date=date
+                        ).count()
+                        
+                        total_attended += attended
+                        total_classes += total
+            
+            if total_classes > 0:
+                percentage = round((total_attended / total_classes) * 100, 2)
+            else:
+                percentage = 0
+                
+            weekly_attendance.append(percentage)
+            print(weekly_attendance)
 
         if view_mode == 'students':
             attendance_stats = cache.get(f'attendance_stats_{group_id}')
@@ -590,14 +628,18 @@ def admin():
 
                 # Кэшируем результат
                 cache.set(f'subject_stats_{group_id}', subject_stats, timeout=300)
-    # pprint(subject_stats)
+
+    pprint(weekly_attendance)
+
     return render_template(
         'admin.html',
         groups=groups_data,
         selected_group=selected_group_data,
         attendance_stats=attendance_stats,
         subject_stats=subject_stats,
-        view_mode=view_mode
+        view_mode=view_mode,
+        weekly_attendance=weekly_attendance,  # Передаем данные для графика
+        weekly_dates=[date.strftime('%a %d') for date in dates]  # Форматируем даты
     )
 
 

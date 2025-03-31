@@ -3,32 +3,34 @@
 {% block content %}
 
 <script src="{{ url_for('static', filename='js/admin_sort.js') }}" defer></script>
+<!-- Подключаем Chart.js для отображения графиков -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <div class="container">
     <h2 class="text-center mt-4">Админ-панель</h2>
     <p class="text-center">Здесь вы можете управлять системой.</p>
 
-    <!-- Кнопка создания новой группы -->
-    <div class="text-center mb-4">
-        <a href="{{ url_for('add_group') }}" class="btn btn-info mr-2">Создать новую группу</a>
-    </div>
-
     <!-- Список групп -->
-    <div class="card mt-4">
-        <div class="card-header">
-            <h4>Список групп</h4>
-        </div>
-        <div class="card-body">
-            <div class="groups-grid">
-                {% for group in groups %}
-                    <div class="group-card">
-                        <h4>{{ group.name }}</h4>
-                        <p class="attendance-percentage">Общая посещаемость: {{ group.attendance_percentage }}%</p>
-                        <a href="{{ url_for('admin', group_id=group.id) }}" class="btn btn-primary" onclick="showLoading()">Подробнее</a>
+    <div class="row">
+        {% for group in groups %}
+        <div class="col-md-4 mb-4">
+            <div class="card shadow clickable-card" 
+                onclick="window.location='{{ url_for('admin', group_id=group.id) }}';"
+                style="cursor: pointer; transition: all 0.3s ease;">
+                <div class="card-body">
+                    <h5 class="card-title">{{ group.name }}</h5>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div class="progress w-75">
+                            <div class="progress-bar bg-success" 
+                                style="width: {{ group.attendance_percentage }}%">
+                            </div>
+                        </div>
+                        <span>{{ group.attendance_percentage }}%</span>
                     </div>
-                {% endfor %}
+                </div>
             </div>
         </div>
+        {% endfor %}
     </div>
 
     <!-- Индикатор загрузки -->
@@ -47,10 +49,14 @@
                 <span style="font-size: 1.5em; font-weight: bold;">{{ selected_group.name }}</span>
             </h4>
             <div>
-                <a href="{{ url_for('admin', group_id=selected_group.id, view_mode='students' if view_mode == 'subjects' else 'subjects') }}" style="margin-top: 5px; margin-bottom: 5px;" class="btn btn-primary">
+                <a href="{{ url_for('admin', group_id=selected_group.id, view_mode='students' if view_mode == 'subjects' else 'subjects') }}" 
+                   style="margin-top: 5px; margin-bottom: 5px;" 
+                   class="btn btn-primary">
                     {{ 'Показать по студентам' if view_mode == 'subjects' else 'Показать по предметам' }}
                 </a>
-                <a href="{{ url_for('admin') }}"  style="margin-top: 5px; margin-bottom: 5px;" class="btn btn-secondary">Закрыть</a>
+                <a href="{{ url_for('admin') }}"  
+                   style="margin-top: 5px; margin-bottom: 5px;" 
+                   class="btn btn-secondary">Закрыть</a>
             </div>
         </div>
         <div class="card-body">
@@ -61,13 +67,13 @@
                         <th>
                             Студент
                             <button id="sort-name-button" class="btn btn-sm btn-link">
-                                <i class="fas fa-sort"></i> <!-- Иконка сортировки -->
+                                <i class="fas fa-sort"></i>
                             </button>
                         </th>
                         <th>
                             Процент посещаемости
                             <button id="sort-percent-button" class="btn btn-sm btn-link">
-                                <i class="fas fa-sort"></i> <!-- Иконка сортировки -->
+                                <i class="fas fa-sort"></i>
                             </button>
                         </th>
                     </tr>
@@ -92,13 +98,13 @@
                         <th>
                             Предмет
                             <button id="sort-subject-button" class="btn btn-sm btn-link">
-                                <i class="fas fa-sort"></i> <!-- Иконка сортировки -->
+                                <i class="fas fa-sort"></i>
                             </button>
                         </th>
                         <th>
                             Процент посещаемости
                             <button id="sort-subject-percent-button" class="btn btn-sm btn-link">
-                                <i class="fas fa-sort"></i> <!-- Иконка сортировки -->
+                                <i class="fas fa-sort"></i>
                             </button>
                         </th>
                     </tr>
@@ -115,6 +121,67 @@
             {% endif %}
         </div>
     </div>
+
+    <!-- График посещаемости за последнюю неделю -->
+    <div class="card mt-4">
+        <div class="card-header">
+            <h4>Посещаемость за последнюю неделю</h4>
+        </div>
+        <div class="card-body">
+            <canvas id="attendanceChart" height="100"></canvas>
+        </div>
+    </div>
+
+    <!-- Скрипт для отображения графика -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const ctx = document.getElementById('attendanceChart').getContext('2d');
+            
+            // Получаем данные из Flask
+            const dates = {{ weekly_dates | tojson | safe }};
+            const attendanceData = {{ weekly_attendance | tojson | safe }};
+            
+            // Создаем график
+            const chart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: dates,
+                    datasets: [{
+                        label: 'Процент посещаемости',
+                        data: attendanceData,
+                        backgroundColor: 'rgba(10, 89, 245, 0.2)',
+                        borderColor: 'rgba(10, 89, 245, 1)',
+                        borderWidth: 2,
+                        tension: 0.1,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 100,
+                            ticks: {
+                                callback: function(value) {
+                                    return value + '%';
+                                }
+                            }
+                        }
+                    },
+                    plugins: {
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return context.parsed.y + '%';
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        });
+    </script>
     {% else %}
     <p>Группа не выбрана.</p>
     {% endif %}
@@ -123,11 +190,9 @@
 <!-- Скрипт для управления индикатором загрузки -->
 <script>
     function showLoading() {
-        // Показываем индикатор загрузки
         document.getElementById('loading').style.display = 'block';
     }
 
-    // Скрываем индикатор загрузки после завершения загрузки страницы
     window.addEventListener('load', function() {
         document.getElementById('loading').style.display = 'none';
     });

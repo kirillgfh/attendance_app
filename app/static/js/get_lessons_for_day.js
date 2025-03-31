@@ -51,6 +51,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     data.lessons.forEach(lesson => {
                         const card = document.createElement('div');
                         card.classList.add('lesson-card');
+                        card.classList.add('clickable-card');
                         card.innerHTML = `
                             <h4>${lesson.subject_name}</h4>
                             <div class="lesson-info">
