@@ -15,7 +15,7 @@
         {% for group in groups %}
         <div class="col-md-4 mb-4">
             <div class="card shadow clickable-card" 
-                onclick="window.location='{{ url_for('admin', group_id=group.id) }}';"
+                onclick="window.location='{{ url_for('admin.admin', group_id=group.id) }}';"
                 style="cursor: pointer; transition: all 0.3s ease;">
                 <div class="card-body">
                     <h5 class="card-title">{{ group.name }}</h5>
@@ -49,12 +49,12 @@
                 <span style="font-size: 1.5em; font-weight: bold;">{{ selected_group.name }}</span>
             </h4>
             <div>
-                <a href="{{ url_for('admin', group_id=selected_group.id, view_mode='students' if view_mode == 'subjects' else 'subjects') }}" 
+                <a href="{{ url_for('admin.admin', group_id=selected_group.id, view_mode='students' if view_mode == 'subjects' else 'subjects') }}" 
                    style="margin-top: 5px; margin-bottom: 5px;" 
                    class="btn btn-primary">
                     {{ 'Показать по студентам' if view_mode == 'subjects' else 'Показать по предметам' }}
                 </a>
-                <a href="{{ url_for('admin') }}"  
+                <a href="{{ url_for('admin.admin') }}"  
                    style="margin-top: 5px; margin-bottom: 5px;" 
                    class="btn btn-secondary">Закрыть</a>
             </div>
@@ -82,7 +82,7 @@
                     {% for stat in attendance_stats %}
                         <tr>
                             <td>
-                                <a href="{{ url_for('student_statistics', student_id=stat.student_id) }}">
+                                <a href="{{ url_for('admin.student_statistics', student_id=stat.student_id) }}">
                                     {{ stat.student_name }}
                                 </a>
                             </td>

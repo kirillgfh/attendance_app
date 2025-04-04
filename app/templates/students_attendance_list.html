@@ -13,7 +13,7 @@
         </div>
         <div class="card-body">
             <!-- Форма для отметки посещений -->
-            <form method="POST" action="{{ url_for('mark_attendance') }}">
+            <form method="POST" action="{{ url_for('dashboard.mark_attendance') }}">
                 <!-- Скрытое поле для selected_date -->
                 <input type="hidden" id="selected-date" name="selected_date" value="{{ selected_date }}" data-lesson-id="{{ lesson.id }}">
                 <!-- Кнопка "Распространить данные пары на все пары ниже" -->

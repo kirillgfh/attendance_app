@@ -21,12 +21,12 @@
         <div class="container-fluid px-4"> <!-- Добавляем контейнер -->
 
             {% if current_user.role == 'moderator' %}
-            <a class="navbar-brand" href="{{ url_for('dashboard') }}">
+            <a class="navbar-brand" href="{{ url_for('dashboard.dashboard') }}">
                 <img src="{{ url_for('static', filename='img/logo.svg') }}" alt="Miet Logo" style="height: 32px;">
             </a>
             {% endif %}
             {% if current_user.role == 'admin' %}
-            <a class="navbar-brand" href="{{ url_for('admin') }}">
+            <a class="navbar-brand" href="{{ url_for('admin.admin') }}">
                 <img src="{{ url_for('static', filename='img/logo.svg') }}" alt="Miet Logo" style="height: 32px;">
             </a>
             {% endif %}
@@ -38,19 +38,19 @@
                     {% if current_user.is_authenticated %}
                         {% if current_user.role == 'moderator' %}
                         <li class="nav-item">
-                            <a class="nav-link" href="{{ url_for('dashboard') }}">Главная</a>
+                            <a class="nav-link" href="{{ url_for('dashboard.dashboard') }}">Главная</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="{{ url_for('edit_group_members') }}">Редактировать список одногруппников</a>
+                            <a class="nav-link" href="{{ url_for('dashboard.edit_group_members') }}">Редактировать список одногруппников</a>
                         </li>
                         {% endif %}
 
                         {% if current_user.role == 'admin' %}
                         <li class="nav-item">
-                            <a class="nav-link" href="{{ url_for('admin') }}">Админ панель</a>
+                            <a class="nav-link" href="{{ url_for('admin.admin') }}">Админ панель</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="{{ url_for('manage_users') }}">Редактировать пользователей</a>
+                            <a class="nav-link" href="{{ url_for('admin.manage_users') }}">Редактировать пользователей</a>
                         </li>
                         {% endif %}
                     {% else %}
@@ -73,7 +73,7 @@
                             <span class="nav-link">Приветствую, {{ current_user.username }} [{{current_user.role}}]</span>
                         </li>
                         <li class="nav-item">
-                            <form action="{{ url_for('logout') }}" method="POST">
+                            <form action="{{ url_for('auth.logout') }}" method="POST">
                                 <button type="submit" class="btn btn-link nav-link">Выйти</button>
                             </form>
                         </li>

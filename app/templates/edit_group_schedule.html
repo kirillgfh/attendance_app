@@ -62,7 +62,7 @@
                                                             data-lesson-id="{{ lesson.id }}" data-subject-id="{{ lesson.subject_id }}"
                                                             data-lesson-number="{{ lesson.lesson_number }}" data-week-type="{{ lesson.week_type }}"
                                                             data-lesson-type="{{ lesson.lesson_type }}" data-weekday="{{ lesson.weekday }}">Редактировать</button>
-                                                    <form method="POST" action="{{ url_for('edit_group_schedule', group_id=group.id) }}" style="display:inline;">
+                                                    <form method="POST" action="{{ url_for('admin.edit_group_schedule', group_id=group.id) }}" style="display:inline;">
                                                         <input type="hidden" name="delete_lesson_id" value="{{ lesson.id }}">
                                                         <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Вы уверены, что хотите удалить этот урок?');">Удалить</button>
                                                     </form>
@@ -85,7 +85,7 @@
 
     <!-- Кнопка "Назад" -->
     <div class="text-center mt-4">
-        <a href="{{ url_for('admin') }}" class="btn btn-secondary">Назад</a>
+        <a href="{{ url_for('admin.admin') }}" class="btn btn-secondary">Назад</a>
     </div>
 </div>
 
@@ -96,7 +96,7 @@
             <div class="modal-header">
                 <h5 class="modal-title" id="addLessonModalLabel">Добавить урок</h5>
             </div>
-            <form method="POST" action="{{ url_for('edit_group_schedule', group_id=group.id) }}">
+            <form method="POST" action="{{ url_for('admin.edit_group_schedule', group_id=group.id) }}">
                 <div class="modal-body">
                     <input type="hidden" name="action" value="add_lesson">
                     <div class="form-group">
@@ -154,7 +154,7 @@
                 <h5 class="modal-title" id="editLessonModalLabel">Редактировать урок</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <form method="POST" action="{{ url_for('edit_group_schedule', group_id=group.id) }}">
+            <form method="POST" action="{{ url_for('admin.edit_group_schedule', group_id=group.id) }}">
                 <div class="modal-body">
                     <input type="hidden" name="action" value="edit_lesson">
                     <input type="hidden" name="lesson_id" id="edit_lesson_id">
